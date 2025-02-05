@@ -3,78 +3,70 @@ import SwiftUI
 struct DynamicSwitch: View {
     var options: [String]
     @Binding var selectedIndex: Int
-
+    
     var body: some View {
         ZStack {
-            // Hintergrund mit Blur und Schatten
-            RoundedRectangle(cornerRadius: 25)
-                .fill(Color(.systemGray5).opacity(0.5))
-                .blur(radius: 10)
-                .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
+            // Basis-Container
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground).opacity(0.15))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                )
             
-            // Hervorhebungsindikator für das ausgewählte Segment
+            // Auswahlindikator
             GeometryReader { geometry in
                 let segmentWidth = geometry.size.width / CGFloat(options.count)
-                RoundedRectangle(cornerRadius: 25)
-                    .fill(Color.white.opacity(0.3))
-                    .frame(width: segmentWidth, height: geometry.size.height)
-                    .offset(x: CGFloat(selectedIndex) * segmentWidth)
-                    .animation(.easeInOut, value: selectedIndex)
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white)
+                    .frame(width: segmentWidth - 8, height: geometry.size.height - 8)
+                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+                    .offset(x: 4 + CGFloat(selectedIndex) * segmentWidth)
+                    .animation(.easeInOut(duration: 0.2), value: selectedIndex)
             }
             
-            // Dynamische Anzeige der Optionen
+            // Text-Optionen
             HStack(spacing: 0) {
                 ForEach(options.indices, id: \.self) { index in
                     Text(options[index])
-                        .fontWeight(.bold)
-                        .foregroundColor(selectedIndex == index ? .black : .gray)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(selectedIndex == index ? Color.black : Color.black.opacity(0.5))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .contentShape(Rectangle()) // Damit der ganze Bereich anklickbar ist
+                        .contentShape(Rectangle())
                         .onTapGesture {
-                            withAnimation(.easeInOut) {
+                            withAnimation(.easeInOut(duration: 0.2)) {
                                 selectedIndex = index
                             }
                         }
                 }
             }
         }
-        .frame(height: 40)
-        .background(BlurView(style: .systemUltraThinMaterial))
-        .clipShape(RoundedRectangle(cornerRadius: 25))
-        .overlay(
-            RoundedRectangle(cornerRadius: 25)
-                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+        .frame(height: 32)
+        .background(
+            BackgroundBlurView(style: .systemThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
         )
     }
 }
 
-struct BlurView: UIViewRepresentable {
-    var style: UIBlurEffect.Style
-
+// Optimierter BlurView für bessere Performance
+struct BackgroundBlurView: UIViewRepresentable {
+    let style: UIBlurEffect.Style
+    
     func makeUIView(context: Context) -> UIVisualEffectView {
-        UIVisualEffectView(effect: UIBlurEffect(style: style))
+        return UIVisualEffectView(effect: UIBlurEffect(style: style))
     }
-
-    func updateUIView(_ uiView: UIVisualEffectView, context: Context) { }
+    
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
 }
 
-struct ContentView: View {
-    @State private var selectedIndex = 0
-    let options = ["Standard", "Satellite", "Hybrid"]
-
-    var body: some View {
-        VStack {
-            DynamicSwitch(options: options, selectedIndex: $selectedIndex)
-                .padding()
-            
-            Text("Ausgewählte Option: \(options[selectedIndex])")
-                .padding()
-        }
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
+// Vorschau
+struct DynamicSwitch_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ZStack {
+            Color.blue.opacity(0.3).edgesIgnoringSafeArea(.all)
+            DynamicSwitch(options: ["Satellite", "Standard"], selectedIndex: .constant(0))
+                .frame(width: 200)
+        }
     }
 }
